@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide to Common Stock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A thematic single-page application designed for novice learners. The structure is not linear but grouped by user-centric goals: Understanding the Basics, Comparing Security Types, Understanding the Company & Investor Perspectives, and a Reference Glossary. This non-linear, navigable structure allows users to either follow a narrative flow or jump directly to their area of interest, which is more effective for learning than a dense, chapter-based report. Key interactions include clickable cards for progressive information disclosure (Shareholder Rights), a toggle-driven comparison (Common vs. Preferred), and dynamic charts to visualize abstract concepts like risk, reward, and capital structure. This design prioritizes exploration and comprehension over passive reading. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Shareholder Rights -> Goal: Inform -> Viz: Interactive Cards (HTML/CSS/JS) -> Interaction: Click to reveal details -> Justification: Breaks down dense info into digestible, user-triggered chunks.
+        - Report Info: Common vs. Preferred Stock -> Goal: Compare -> Viz: Side-by-side text blocks + Bar Chart (Chart.js) -> Interaction: Toggle buttons to switch view/highlight data -> Justification: The bar chart provides an instant, powerful visual for the abstract concept of liquidation priority, which is a key differentiator.
+        - Report Info: Why Companies Issue Stock -> Goal: Inform -> Viz: Donut Chart (Chart.js) + Icon-based list -> Interaction: Hover effects on list items -> Justification: The donut chart visualizes capital structure, making the concept of equity vs. debt tangible.
+        - Report Info: Risk vs. Reward -> Goal: Compare/Change -> Viz: Line Chart (Chart.js) -> Interaction: Buttons to toggle between short-term and long-term views -> Justification: Effectively demonstrates stock volatility versus long-term growth potential, a core investment principle.
+        - Report Info: Key Terms -> Goal: Organize/Inform -> Viz: Interactive Glossary Grid (HTML/CSS/JS) -> Interaction: Click term to show definition -> Justification: Provides a quick, non-linear way to access definitions without leaving the page context.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F4; /* Stone 100 */
+            color: #44403C; /* Stone 700 */
+        }
+        .nav-link {
+            transition: color 0.3s, border-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #1E40AF; /* Blue 800 */
+            border-bottom-color: #1E40AF;
+        }
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .btn-primary {
+            background-color: #2563EB; /* Blue 600 */
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #1D4ED8; /* Blue 700 */
+        }
+        .btn-secondary {
+            background-color: #E5E7EB; /* Gray 200 */
+            color: #374151; /* Gray 700 */
+            transition: background-color 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: #D1D5DB; /* Gray 300 */
+        }
+        .btn-toggle.active {
+            background-color: #2563EB;
+            color: white;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-blue-800">📈 Stock 101</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#basics" class="nav-link px-3 py-2 rounded-md text-sm font-medium">The Basics</a>
+                        <a href="#comparison" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Comparison</a>
+                        <a href="#perspectives" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Perspectives</a>
+                        <a href="#journey" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Your Journey</a>
+                        <a href="#glossary" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Glossary</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="py-20 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl md:text-6xl font-bold tracking-tight text-gray-900">What is a Common Stock?</h1>
+                <p class="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">An interactive guide to understanding the most fundamental piece of the stock market. Learn what it means to be a company owner, what your rights are, and how it all works—explained in simple terms.</p>
+            </div>
+        </section>
+
+        <section id="basics" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">The Owner's Toolkit</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Owning a common stock isn't just a number in an account; it's a slice of ownership in a business. This ownership comes with a specific set of rights that give you influence and a stake in the company's future. Click on each right below to learn more about what it means for you as an investor.</p>
+                </div>
+                <div id="rights-grid" class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                </div>
+                <div id="rights-display" class="mt-8 p-6 bg-white rounded-lg shadow-lg min-h-[150px] flex items-center justify-center transition-opacity duration-500 opacity-0">
+                    <p class="text-gray-500">Select a right above to see its description.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Common vs. Preferred Stock</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Not all stocks are created equal. Companies can issue two main types: common and preferred. While both represent ownership, they offer very different features for investors. This section breaks down the key distinctions in rights, returns, and risk.</p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div id="comparison-table" class="bg-gray-50 p-6 rounded-lg">
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-4">Who Gets Paid First? (Liquidation Priority)</h3>
+                        <p class="text-sm text-gray-500 text-center mb-4">In case of bankruptcy, there's a clear pecking order for who gets the company's remaining assets. This chart shows that common stockholders are last in line, which is a key reason for their higher risk and higher potential reward.</p>
+                        <div class="chart-container">
+                            <canvas id="liquidationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="perspectives" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Two Sides of the Coin</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Issuing and investing in stock involves a strategic exchange between companies seeking funds and investors seeking growth. This section explores both perspectives: why a company decides to "go public" and what benefits and risks an investor takes on.</p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div class="bg-white p-8 rounded-lg shadow-lg">
+                        <h3 class="text-2xl font-bold text-center mb-6">Why Companies Issue Stock</h3>
+                        <p class="text-gray-600 mb-6">For a company, issuing stock is a powerful way to raise money without taking on debt. This capital fuels growth, from building new factories to funding research. It's a trade-off: they get cash, but give up a portion of ownership.</p>
+                        <div class="chart-container h-64 max-h-64 mb-6">
+                            <canvas id="capitalStructureChart"></canvas>
+                        </div>
+                        <ul id="company-benefits" class="space-y-4"></ul>
+                    </div>
+                    <div class="bg-white p-8 rounded-lg shadow-lg">
+                        <h3 class="text-2xl font-bold text-center mb-6">Why Investors Buy Stock</h3>
+                        <p class="text-gray-600 mb-6">For an investor, buying stock is a bet on a company's future success. It's a high-stakes game with unique risks and rewards, fundamentally different from the safety of a savings account.</p>
+                        <div class="flex justify-center space-x-2 mb-4">
+                            <button id="toggle-benefits" class="btn-toggle active px-4 py-2 text-sm font-medium rounded-md">Benefits</button>
+                            <button id="toggle-risks" class="btn-toggle btn-secondary px-4 py-2 text-sm font-medium rounded-md">Risks</button>
+                        </div>
+                        <div id="investor-perspective-content"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="journey" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">The Investor's Journey</h2>
+                     <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Getting started with stock investing can seem daunting, but it follows a logical path. This section provides a simplified roadmap, from setting goals to making your first investment, and visualizes the key principle of long-term growth versus short-term noise.</p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-4">Long-Term Growth vs. Short-Term Volatility</h3>
+                        <p class="text-sm text-gray-500 text-center mb-4">Stock prices can be very volatile day-to-day. The key is to focus on the long-term trend. This interactive chart shows how a hypothetical investment can grow over many years, despite short-term ups and downs.</p>
+                        <div class="chart-container">
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                        <div class="flex justify-center mt-4 space-x-4">
+                            <button id="view-short-term" class="btn-secondary px-4 py-2 text-sm font-medium rounded-md">View 1 Year (Volatility)</button>
+                            <button id="view-long-term" class="btn-primary px-4 py-2 text-sm font-medium rounded-md">View 20 Years (Growth)</button>
+                        </div>
+                    </div>
+                    <div id="how-to-invest" class="space-y-6">
+                        <h3 class="text-xl font-semibold text-center mb-4">How to Start Investing (A Simple Path)</h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="glossary" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Key Terms Glossary</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">The world of finance has its own language. Here are some of the most important terms from the report, demystified. Click on any term to see a simple, clear definition.</p>
+                </div>
+                <div id="glossary-grid" class="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                </div>
+                <div id="glossary-display" class="mt-8 p-6 bg-white rounded-lg shadow-lg min-h-[100px] flex flex-col items-center justify-center transition-opacity duration-500 opacity-0">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white">
+        <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+            <p>This interactive guide is for educational purposes only and is not financial advice.</p>
+            <p class="text-sm text-gray-400 mt-2">Built from a comprehensive report on Common Stock in the USA.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const data = {
+                shareholderRights: [
+                    { name: 'Voting Power', icon: '🗳️', description: 'The right to vote on major company decisions, like electing the board of directors. It gives you a say in the company’s strategic direction.' },
+                    { name: 'Entitlement to Dividends', icon: '💰', description: 'The right to receive a portion of the company’s profits, if the board decides to distribute them. This is a way to share in the company\'s success.' },
+                    { name: 'Residual Claim on Assets', icon: '🏛️', description: 'In a bankruptcy, you get a share of what’s left after all debts and preferred stockholders are paid. This is the highest-risk, highest-reward position.' },
+                    { name: 'Transferability', icon: '🔄', description: 'The right to freely buy or sell your shares on a stock exchange. This provides liquidity, meaning you can easily convert your investment to cash.' },
+                    { name: 'Information Access', icon: '📄', description: 'The right to inspect basic corporate documents and receive regular financial reports, ensuring transparency from the company.' },
+                    { name: 'Legal Recourse', icon: '⚖️', description: 'The right to sue the company for wrongful acts, such as fraud or mismanagement, protecting your investment from misconduct.' }
+                ],
+                comparison: {
+                    common: [
+                        { feature: 'Voting Rights', value: '✅ Yes, typically one vote per share.' },
+                        { feature: 'Dividends', value: 'Variable and not guaranteed.' },
+                        { feature: 'Liquidation Priority', value: 'Lowest (last in line).' },
+                        { feature: 'Growth Potential', value: 'High (unlimited upside).' },
+                        { feature: 'Volatility', value: 'Higher risk and price swings.' }
+                    ],
+                    preferred: [
+                        { feature: 'Voting Rights', value: '❌ Generally no voting rights.' },
+                        { feature: 'Dividends', value: 'Fixed and paid out before common dividends.' },
+                        { feature: 'Liquidation Priority', value: 'Higher (paid before common).' },
+                        { feature: 'Growth Potential', value: 'Limited, like a bond.' },
+                        { feature: 'Volatility', value: 'Lower risk and more stable price.' }
+                    ]
+                },
+                companyBenefits: [
+                    { name: 'Raise Capital', icon: '🏦', description: 'The primary reason: to get money for growth, R&D, or paying off debt.' },
+                    { name: 'No Repayment', icon: '💸', description: 'Unlike a loan, the money raised doesn’t have to be paid back.' },
+                    { name: 'Enhanced Reputation', icon: '⭐', description: 'Being a public company increases credibility and visibility.' },
+                    { name: 'Employee Incentives', icon: '🤝', description: 'Stock options can be used to attract and motivate top talent.' }
+                ],
+                investorPerspective: {
+                    benefits: [
+                        { name: 'Capital Appreciation', icon: '📈', description: 'The main goal: your shares increase in value as the company grows.' },
+                        { name: 'Dividend Income', icon: '💵', description: 'Receive a regular stream of cash from company profits.' },
+                        { name: 'Liquidity', icon: '💧', description: 'Easily convert your shares to cash on a stock exchange.' },
+                        { name: 'Ownership Influence', icon: '📣', description: 'Use your voting rights to have a say in the company\'s future.' }
+                    ],
+                    risks: [
+                        { name: 'Market Volatility', icon: '🎢', description: 'Stock prices can drop dramatically due to market or company issues.' },
+                        { name: 'Bankruptcy Risk', icon: '📉', description: 'You could lose your entire investment if the company goes bankrupt.' },
+                        { name: 'No Guaranteed Returns', icon: '🚫', description: 'Unlike a savings account, there is no guarantee of profit or even getting your initial investment back.' },
+                        { name: 'Ownership Dilution', icon: '➗', description: 'If the company issues more stock, your ownership percentage decreases.' }
+                    ]
+                },
+                howToInvest: [
+                    { step: 1, title: 'Set Your Goals', description: 'Decide what you\'re investing for (e.g., retirement, a house) and your timeline.' },
+                    { step: 2, title: 'Determine Your Budget', description: 'Invest money you can afford to lose, after covering essentials and emergencies.' },
+                    { step: 3, title: 'Open a Brokerage Account', description: 'Choose a broker (online, full-service, or robo-advisor) to handle your trades.' },
+                    { step: 4, title: 'Fund Your Account', description: 'Transfer money into your new brokerage account to get started.' },
+                    { step: 5, title: 'Pick Your Investments', description: 'Start with stable, well-known companies (blue-chips) or diversified funds (ETFs).' },
+                    { step: 6, title: 'Monitor and Learn', description: 'Investing is a marathon. Keep learning and review your portfolio periodically.' }
+                ],
+                glossary: [
+                    { term: 'IPO', definition: 'Initial Public Offering. The first time a private company sells its stock to the public.' },
+                    { term: 'Market Cap', definition: 'Market Capitalization. The total value of a company\'s shares (Share Price x Number of Shares).' },
+                    { term: 'Dividend Yield', definition: 'A ratio showing how much a company pays in dividends each year relative to its stock price.' },
+                    { term: 'Blue-chip Stock', definition: 'A stock from a large, well-established, and financially sound company.' },
+                    { term: 'ETF', definition: 'Exchange-Traded Fund. A basket of stocks that trades like a single stock, offering instant diversification.' },
+                    { term: 'Broker', definition: 'A person or firm that arranges transactions between a buyer and a seller for a commission.' },
+                    { term: 'Volatility', definition: 'The degree of variation of a trading price series over time, a measure of risk.' },
+                    { term: 'Liquidity', definition: 'How easily an asset can be converted into cash without affecting its market price.' }
+                ]
+            };
+
+            function initShareholderRights() {
+                const grid = document.getElementById('rights-grid');
+                const display = document.getElementById('rights-display');
+                data.shareholderRights.forEach((right, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'card bg-white p-6 rounded-lg shadow-md cursor-pointer text-center';
+                    card.innerHTML = `<div class="text-4xl mb-4">${right.icon}</div><h3 class="font-semibold text-lg">${right.name}</h3>`;
+                    card.addEventListener('click', () => {
+                        display.style.opacity = '0';
+                        setTimeout(() => {
+                            display.innerHTML = `<div class="text-4xl mr-4">${right.icon}</div><div><h4 class="font-bold text-xl">${right.name}</h4><p class="text-gray-600 mt-2">${right.description}</p></div>`;
+                            display.style.opacity = '1';
+                        }, 300);
+                        
+                        document.querySelectorAll('#rights-grid .card').forEach(c => c.classList.remove('ring-2', 'ring-blue-500'));
+                        card.classList.add('ring-2', 'ring-blue-500');
+                    });
+                    grid.appendChild(card);
+                });
+            }
+
+            function initComparisonTable() {
+                const container = document.getElementById('comparison-table');
+                let html = '<h3 class="text-xl font-semibold text-center mb-4">Key Differences</h3><table class="w-full text-left"><thead><tr><th class="p-2 bg-gray-200 rounded-tl-lg">Feature</th><th class="p-2 bg-gray-200">Common Stock</th><th class="p-2 bg-gray-200 rounded-tr-lg">Preferred Stock</th></tr></thead><tbody>';
+                for (let i = 0; i < data.comparison.common.length; i++) {
+                    html += `<tr class="border-b border-gray-200"><td class="p-2 font-medium">${data.comparison.common[i].feature}</td><td class="p-2">${data.comparison.common[i].value}</td><td class="p-2">${data.comparison.preferred[i].value}</td></tr>`;
+                }
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            }
+
+            function initInvestorPerspective() {
+                const contentDiv = document.getElementById('investor-perspective-content');
+                const benefitsBtn = document.getElementById('toggle-benefits');
+                const risksBtn = document.getElementById('toggle-risks');
+
+                function renderPerspective(type) {
+                    const items = data.investorPerspective[type];
+                    let html = '<ul class="space-y-4 mt-6">';
+                    items.forEach(item => {
+                        html += `<li class="flex items-start"><span class="text-2xl mr-4">${item.icon}</span><div><h4 class="font-semibold">${item.name}</h4><p class="text-sm text-gray-500">${item.description}</p></div></li>`;
+                    });
+                    html += '</ul>';
+                    contentDiv.innerHTML = html;
+                }
+
+                benefitsBtn.addEventListener('click', () => {
+                    renderPerspective('benefits');
+                    benefitsBtn.classList.add('active', 'btn-primary');
+                    benefitsBtn.classList.remove('btn-secondary');
+                    risksBtn.classList.remove('active', 'btn-primary');
+                    risksBtn.classList.add('btn-secondary');
+                });
+
+                risksBtn.addEventListener('click', () => {
+                    renderPerspective('risks');
+                    risksBtn.classList.add('active', 'btn-primary');
+                    risksBtn.classList.remove('btn-secondary');
+                    benefitsBtn.classList.remove('active', 'btn-primary');
+                    benefitsBtn.classList.add('btn-secondary');
+                });
+
+                renderPerspective('benefits');
+            }
+
+            function initCompanyBenefits() {
+                const list = document.getElementById('company-benefits');
+                let html = '';
+                data.companyBenefits.forEach(item => {
+                    html += `<li class="flex items-start p-3 rounded-lg hover:bg-gray-50"><span class="text-3xl mr-4">${item.icon}</span><div><h4 class="font-semibold">${item.name}</h4><p class="text-sm text-gray-500">${item.description}</p></div></li>`;
+                });
+                list.innerHTML = html;
+            }
+
+            function initHowToInvest() {
+                const container = document.getElementById('how-to-invest');
+                let html = container.innerHTML; // Keep existing H3
+                data.howToInvest.forEach(item => {
+                    html += `<div class="flex items-start"><div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">${item.step}</div><div class="ml-4"><h4 class="font-semibold text-lg">${item.title}</h4><p class="text-gray-600">${item.description}</p></div></div>`;
+                });
+                container.innerHTML = html;
+            }
+
+            function initGlossary() {
+                const grid = document.getElementById('glossary-grid');
+                const display = document.getElementById('glossary-display');
+                data.glossary.forEach(item => {
+                    const button = document.createElement('button');
+                    button.className = 'btn-secondary p-3 rounded-md text-sm font-medium text-center';
+                    button.textContent = item.term;
+                    button.addEventListener('click', () => {
+                        display.style.opacity = '0';
+                        setTimeout(() => {
+                            display.innerHTML = `<h4 class="font-bold text-xl mb-2">${item.term}</h4><p class="text-gray-600 text-center">${item.definition}</p>`;
+                            display.style.opacity = '1';
+                        }, 300);
+
+                        document.querySelectorAll('#glossary-grid button').forEach(b => {
+                            b.classList.remove('btn-primary');
+                            b.classList.add('btn-secondary');
+                        });
+                        button.classList.add('btn-primary');
+                        button.classList.remove('btn-secondary');
+                    });
+                    grid.appendChild(button);
+                });
+            }
+
+            function createLiquidationChart() {
+                const ctx = document.getElementById('liquidationChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Creditors (Banks)', 'Bondholders', 'Preferred Stock', 'Common Stock'],
+                        datasets: [{
+                            label: 'Claim on Assets',
+                            data: [100, 80, 60, 20],
+                            backgroundColor: ['#60A5FA', '#3B82F6', '#2563EB', '#1E40AF'],
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Order of Payout in Bankruptcy' }
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+            
+            function createCapitalStructureChart() {
+                const ctx = document.getElementById('capitalStructureChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Common Equity', 'Debt', 'Preferred Stock'],
+                        datasets: [{
+                            label: 'Capital Structure',
+                            data: [50, 40, 10],
+                            backgroundColor: ['#2563EB', '#93C5FD', '#60A5FA'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            title: { display: true, text: 'Example Company Funding Mix' }
+                        }
+                    }
+                });
+            }
+
+            let growthChart;
+            function createGrowthChart() {
+                const ctx = document.getElementById('growthChart').getContext('2d');
+                const longTermLabels = Array.from({ length: 21 }, (_, i) => `Year ${i}`);
+                const longTermData = longTermLabels.reduce((acc, _, i) => {
+                    const lastValue = acc.length > 0 ? acc[acc.length - 1] : 10000;
+                    const volatility = (Math.random() - 0.4) * 2000;
+                    const growth = 700;
+                    acc.push(Math.max(2000, lastValue + growth + volatility));
+                    return acc;
+                }, []);
+
+                const chartConfig = {
+                    type: 'line',
+                    data: {
+                        labels: longTermLabels.slice(0, 13),
+                        datasets: [{
+                            label: 'Investment Value',
+                            data: longTermData.slice(0, 13).map((val, i) => i === 0 ? 10000 : val),
+                            borderColor: '#1E40AF',
+                            backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + (value / 1000) + 'k';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                
+                growthChart = new Chart(ctx, chartConfig);
+
+                document.getElementById('view-long-term').addEventListener('click', () => {
+                    growthChart.data.labels = longTermLabels;
+                    growthChart.data.datasets[0].data = longTermData;
+                    growthChart.update();
+                });
+
+                document.getElementById('view-short-term').addEventListener('click', () => {
+                    const shortTermLabels = Array.from({ length: 13 }, (_, i) => `Month ${i}`);
+                    const shortTermData = shortTermLabels.map((_, i) => {
+                         if (i === 0) return 10000;
+                         return 10000 + (Math.random() - 0.5) * 2000 * Math.sqrt(i) + i * 50;
+                    });
+                    growthChart.data.labels = shortTermLabels;
+                    growthChart.data.datasets[0].data = shortTermData;
+                    growthChart.update();
+                });
+                
+                document.getElementById('view-long-term').click();
+            }
+
+            function initNavScroll() {
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        document.querySelector(this.getAttribute('href')).scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+            }
+
+            initShareholderRights();
+            initComparisonTable();
+            initCompanyBenefits();
+            initInvestorPerspective();
+            initHowToInvest();
+            initGlossary();
+            createLiquidationChart();
+            createCapitalStructureChart();
+            createGrowthChart();
+            initNavScroll();
+        });
+    </script>
+</body>
+</html>
